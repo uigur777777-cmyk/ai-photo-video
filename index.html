@@ -1,114 +1,235 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ИИ Фото и Видео</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ИИ Фото и Видео</title>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #0f172a;
-            color: white;
-            text-align: center;
-        }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
 
-        header {
-            padding: 25px 15px;
-            background: #111827;
-        }
+header {
+  padding: 30px 15px;
+  background: #111827;
+}
 
-        h1 {
-            font-size: 36px;
-            margin: 10px 0;
-        }
+h1 {
+  font-size: 34px;
+  margin: 10px 0;
+}
 
-        p {
-            color: #cbd5e1;
-            font-size: 18px;
-        }
+.card {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 25px;
+  background: #1e293b;
+  border-radius: 18px;
+}
 
-        .container {
-            max-width: 900px;
-            margin: auto;
-            padding: 40px 20px;
-        }
+input, textarea, button {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 15px;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 16px;
+}
 
-        .card {
-            background: #1e293b;
-            border-radius: 20px;
-            padding: 30px;
-            margin-top: 25px;
-        }
+textarea {
+  height: 100px;
+  resize: none;
+}
 
-        button {
-            background: #7c3aed;
-            color: white;
-            border: none;
-            padding: 15px 25px;
-            border-radius: 12px;
-            font-size: 18px;
-            cursor: pointer;
-            margin: 10px;
-        }
+button {
+  background: #7c3aed;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-        button:hover {
-            background: #6d28d9;
-        }
+button:disabled {
+  opacity: 0.5;
+}
 
-        input {
-            margin: 20px;
-            padding: 12px;
-            background: white;
-            border-radius: 10px;
-        }
+#status {
+  margin-top: 20px;
+}
 
-        footer {
-            margin-top: 50px;
-            padding: 20px;
-            color: #94a3b8;
-        }
-    </style>
+video {
+  width: 100%;
+  margin-top: 20px;
+  border-radius: 12px;
+}
+
+a.download {
+  display: block;
+  margin-top: 15px;
+  padding: 14px;
+  background: #16a34a;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+}
+</style>
 </head>
 
 <body>
 
 <header>
-    <h1>🤖 ИИ Фото и Видео</h1>
-    <p>Создавай изображения и видео с помощью искусственного интеллекта</p>
+  <h1>🤖 ИИ Фото и Видео</h1>
+  <p>Создавай видео из фотографий с помощью искусственного интеллекта</p>
 </header>
 
-<div class="container">
+<div class="card">
 
-    <div class="card">
-        <h2>🖼️ Оживить фотографию</h2>
-        <p>Загрузи фотографию и создай из неё живое видео</p>
+  <h2>🖼️ Оживить фотографию</h2>
 
-        <input type="file" accept="image/*">
+  <input id="photo" type="file" accept="image/*">
 
-        <br>
+  <textarea id="prompt">Реалистичная кинематографическая анимация фотографии, естественные движения человека, лица и тела, лёгкое движение камеры, реалистичная мимика.</textarea>
 
-        <button onclick="alert('Функция ИИ скоро будет подключена!')">
-            Оживить фото
-        </button>
-    </div>
+  <button id="animateBtn">✨ Оживить фото</button>
 
-    <div class="card">
-        <h2>🎬 Создать видео</h2>
-        <p>Создавай короткие видео с помощью ИИ</p>
+  <div id="status"></div>
 
-        <button onclick="alert('Генератор видео скоро будет подключен!')">
-            Создать видео
-        </button>
-    </div>
+  <div id="result"></div>
 
 </div>
 
-<footer>
-    © 2026 ИИ Фото и Видео
-</footer>
+<script>
+
+const WORKER_URL =
+  "https://bold-king-b090.uigur777777.workers.dev";
+
+const photo = document.getElementById("photo");
+const prompt = document.getElementById("prompt");
+const button = document.getElementById("animateBtn");
+const status = document.getElementById("status");
+const result = document.getElementById("result");
+
+function resizeImage(file) {
+  return new Promise((resolve, reject) => {
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = e => {
+      img.onload = () => {
+
+        const max = 1280;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > max || height > max) {
+          if (width > height) {
+            height = Math.round(height * max / width);
+            width = max;
+          } else {
+            width = Math.round(width * max / height);
+            height = max;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+button.onclick = async () => {
+
+  if (!photo.files.length) {
+    alert("Сначала выбери фотографию.");
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "⏳ Загружаем фотографию...";
+  result.innerHTML = "";
+
+  try {
+
+    const image = await resizeImage(photo.files[0]);
+
+    status.textContent =
+      "🤖 ИИ создаёт видео... Это может занять некоторое время.";
+
+    const response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        image: image,
+        prompt: prompt.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || data.message || "Ошибка генерации"
+      );
+    }
+
+    const videoUrl =
+      data.video?.url ||
+      data.data?.video?.url;
+
+    if (!videoUrl) {
+      throw new Error("Видео не найдено в ответе ИИ.");
+    }
+
+    status.textContent = "✅ Видео готово!";
+
+    result.innerHTML = `
+      <video controls autoplay>
+        <source src="${videoUrl}" type="video/mp4">
+      </video>
+
+      <a class="download"
+         href="${videoUrl}"
+         target="_blank"
+         download>
+         ⬇️ Скачать видео
+      </a>
+    `;
+
+  } catch (error) {
+
+    console.error(error);
+
+    status.textContent =
+      "❌ Ошибка: " + error.message;
+
+  } finally {
+
+    button.disabled = false;
+  }
+};
+
+</script>
 
 </body>
 </html>
-<!-- обновление сайта -->
